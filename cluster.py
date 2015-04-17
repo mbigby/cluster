@@ -1,26 +1,11 @@
 #! /usr/bin/env python
 
 import sys
-import levenshtein as l
+import levenshtein
 
 def wordstream():
-   i = 0
    for line in sys.stdin:
-      i += 1
-      line = line.rstrip().lstrip()
-      (_, text) = line.split('\t', 1)
-      for w in text.split(','):
-         w = w.rstrip().lstrip()
-         if w != "":
-            yield w
-
-def build_wordlist(stream):
-   used = set()
-   for w in stream:
-      l = w.lower()
-      if l not in used:
-         used.add(l)
-         yield w
+      yield line.rstrip().lstrip()
 
 def find_nearest(matrix):
    min_d = sys.float_info.max 
@@ -35,6 +20,13 @@ def find_nearest(matrix):
             min_d = matrix[i][j]
    return (min_i, min_j, min_d) 
 
+
+def distance(a,b):
+   if len(a) + len(b) < 1:
+      return 0
+
+   return float(levenshtein.distance(a.lower(), b.lower())) / max(len(a),len(b))
+
 def build_distance_matrix(words):
    n = len(words)
    matrix  = [[0 for x in range(n)] for x in range(n)] 
@@ -43,7 +35,7 @@ def build_distance_matrix(words):
    for i in range(n):
       clusters[i] = (words[i], )
       for j in range(i+1,n):
-         d = l.distance(words[i], words[j]) * 1.0 / max(len(words[i]), len(words[j])) 
+         d = distance(words[i], words[j]) 
          matrix[i][j] = d
          matrix[j][i] = d
       matrix[i][i] = 0.0
@@ -63,15 +55,13 @@ def merge_clusters(i, j, matrix, clusters):
    
    del matrix[j]
 
-wordlist = list(build_wordlist(wordstream()))
+wordlist = list(wordstream())
 matrix, clusters = build_distance_matrix(wordlist)
 
 while len(clusters) > 1:
    (i,j,min_d) = find_nearest(matrix)
    if min_d > .2:
       break
-
-   print "cluster (%s) is near (%s)" % (clusters[i], clusters[j]) 
 
    merge_clusters(i,j, matrix, clusters)
 
