@@ -26,10 +26,3 @@ def distance(s1, s2):
                 d[(i,j)] = min (d[(i,j)], d[i-2,j-2] + cost) # transposition
  
     return d[lenstr1-1,lenstr2-1]
-
-def same(x,y,r):
-   d = distance(x.lower(),y.lower()) * 2.0 / (len(x) + len(y))
-   if d < r:
-      return d
-   else:
-      return None
